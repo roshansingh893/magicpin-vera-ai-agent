@@ -93,7 +93,7 @@ pytest tests/ -v
 |--------|------|-------------|--------|
 | `GET` | `/v1/healthz` | Liveness probe | ✅ Implemented |
 | `GET` | `/v1/metadata` | Bot name, version, description | ✅ Implemented |
-| `POST` | `/v1/context` | Compose a message from the 4-context framework | ✅ Validates input (composition in Phase 2) |
+| `POST` | `/v1/context` | Compose a message from the 4-context framework | ✅ Complete (Groq API integrated) |
 | `POST` | `/v1/reply` | Handle merchant reply in multi-turn conversation | ✅ Validates input (logic in Phase 2) |
 | `POST` | `/v1/tick` | Scheduled cadence check for proactive outreach | ✅ Validates input (logic in Phase 2) |
 
@@ -104,6 +104,6 @@ pytest tests/ -v
 | Phase | Focus | Status |
 |-------|-------|--------|
 | **Phase 1** | Backend foundation — project structure, API, models, config, tests | ✅ Complete |
-| **Phase 2** | Message composition — prompt engineering, LLM integration, structured output | 🔲 Next |
-| **Phase 3** | Multi-turn conversation handling — auto-reply detection, intent routing | 🔲 Planned |
+| **Phase 2** | Message composition — prompt engineering, LLM integration, structured output | ✅ Complete |
+| **Phase 3** | Multi-turn conversation handling — auto-reply detection, intent routing | 🔲 Next |
 | **Phase 4** | Evaluation — generate `submission.jsonl` for the 30 test pairs | 🔲 Planned |
