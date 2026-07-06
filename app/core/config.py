@@ -33,10 +33,9 @@ class Settings(BaseSettings):
     port: int = 8000
     log_level: str = "INFO"
 
-    # ── LLM Configuration (Phase 2 — unused for now) ────────────
-    llm_provider: str = ""          # e.g. "gemini", "openai", "anthropic"
-    llm_model_name: str = ""        # e.g. "gemini-2.5-pro"
-    llm_api_key: str = ""           # API key — NEVER hardcode
+    # ── LLM Configuration (Groq) ────────────────────────────────
+    groq_api_key: str = ""          # GROQ_API_KEY env var
+    groq_model: str = "llama-3.3-70b-versatile"  # GROQ_MODEL env var
     llm_temperature: float = 0.0    # deterministic output per challenge rules
     llm_max_tokens: int = 1024
     llm_timeout_seconds: int = 30   # challenge constraint: <30s per call

@@ -1,5 +1,9 @@
 """Service layer — business logic and message composition.
 
-This package will house the core message composition engine in Phase 2.
+This package houses the core message composition engine.
 Services are injected into API routes via FastAPI's dependency injection.
 """
+
+from app.services.composer import compose
+
+__all__ = ["compose"]

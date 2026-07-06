@@ -5,9 +5,12 @@ Run with: pytest tests/ -v
 """
 
 import pytest
+from unittest.mock import AsyncMock, patch
+
 from fastapi.testclient import TestClient
 
 from app.main import create_app
+from app.models.responses import ComposedMessage
 
 
 @pytest.fixture(scope="module")
@@ -80,19 +83,34 @@ VALID_CONTEXT_PAYLOAD = {
     },
 }
 
+MOCK_COMPOSED = ComposedMessage(
+    body="Dr. Meera, JIDA's Oct issue has a finding for your practice.",
+    cta="open_ended",
+    send_as="vera",
+    suppression_key="research:dentists:2026-W17",
+    rationale="Research digest with clinical anchor.",
+)
+
 
 class TestComposeContext:
     """Context composition endpoint tests."""
 
-    def test_valid_payload_returns_200(self, client: TestClient) -> None:
+    @patch("app.api.routes.compose", new_callable=AsyncMock, return_value=MOCK_COMPOSED)
+    def test_valid_payload_returns_200(self, mock_compose: AsyncMock, client: TestClient) -> None:
         response = client.post("/v1/context", json=VALID_CONTEXT_PAYLOAD)
         assert response.status_code == 200
 
-    def test_valid_payload_returns_message(self, client: TestClient) -> None:
+    @patch("app.api.routes.compose", new_callable=AsyncMock, return_value=MOCK_COMPOSED)
+    def test_valid_payload_returns_composed_message(self, mock_compose: AsyncMock, client: TestClient) -> None:
         data = client.post("/v1/context", json=VALID_CONTEXT_PAYLOAD).json()
-        assert data["message"] == "Context received."
+        assert data["message"] == "Message composed successfully."
+        assert data["result"] is not None
+        assert data["result"]["body"] == MOCK_COMPOSED.body
+        assert data["result"]["cta"] == "open_ended"
+        assert data["result"]["send_as"] == "vera"
 
-    def test_with_customer_returns_200(self, client: TestClient) -> None:
+    @patch("app.api.routes.compose", new_callable=AsyncMock, return_value=MOCK_COMPOSED)
+    def test_with_customer_returns_200(self, mock_compose: AsyncMock, client: TestClient) -> None:
         payload = {
             **VALID_CONTEXT_PAYLOAD,
             "customer": {
