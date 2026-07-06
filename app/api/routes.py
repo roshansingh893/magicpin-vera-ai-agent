@@ -20,9 +20,13 @@ from app.models.responses import (
     HealthResponse,
     MetadataResponse,
     ReplyResponse,
+    TickAction,
     TickResponse,
 )
 from app.services.composer import compose
+from app.services.conversation_manager import ConversationManager, ConversationNotFoundError
+from app.services.reply_handler import handle_merchant_reply
+from app.services.tick_handler import process_tick
 
 logger = logging.getLogger(__name__)
 
@@ -85,6 +89,7 @@ async def compose_context(request: ComposeRequest) -> ComposeResponse:
 
     Passes the validated contexts through the composition pipeline:
     prompt building → LLM call → output validation → ComposedMessage.
+    Also creates a conversation for multi-turn follow-up.
     """
     logger.info(
         "POST /v1/context — merchant=%s trigger=%s category=%s customer=%s",
@@ -102,43 +107,86 @@ async def compose_context(request: ComposeRequest) -> ComposeResponse:
         customer=request.customer,
     )
 
+    # Create a conversation to track multi-turn follow-up
+    conversation = ConversationManager.create(
+        merchant_id=request.merchant.merchant_id,
+        trigger_id=request.trigger.id,
+        trigger_kind=request.trigger.kind,
+        bot_message=result.body,
+        customer_id=request.customer.customer_id if request.customer else None,
+    )
+
     response = ComposeResponse(
         message="Message composed successfully.",
         result=result,
     )
     logger.info(
-        "POST /v1/context — composed: cta=%s send_as=%s body_len=%d",
+        "POST /v1/context — composed: cta=%s send_as=%s body_len=%d conversation=%s",
         result.cta,
         result.send_as,
         len(result.body),
+        conversation.conversation_id,
     )
     return response
 
+
+# ──────────────────────────────────────────────────────────────────
+# Multi-Turn Conversation Endpoints
+# ──────────────────────────────────────────────────────────────────
 
 @router.post(
     "/reply",
     response_model=ReplyResponse,
     summary="Handle a merchant reply in a multi-turn conversation",
     description=(
-        "Accepts a merchant's reply message and conversation state, "
-        "returns the next bot response. Phase 1: placeholder."
+        "Accepts a merchant's reply message, detects intent, "
+        "updates conversation state, and returns the next bot response."
     ),
 )
 async def handle_reply(request: ReplyRequest) -> ReplyResponse:
     """Accept a merchant reply and produce the next turn.
 
-    Phase 2 will implement conversation state management,
-    auto-reply detection, and intent-handoff routing.
+    Detects intent, handles deterministic replies without LLM,
+    and falls back to LLM for complex merchant messages.
     """
     logger.info(
-        "POST /v1/reply — merchant=%s message_length=%d",
+        "POST /v1/reply — conversation=%s merchant=%s message_length=%d",
+        request.conversation_id,
         request.merchant_id,
         len(request.merchant_message),
     )
-    logger.info("POST /v1/reply — validation successful")
 
-    response = ReplyResponse(message="Reply endpoint.")
-    logger.info("POST /v1/reply — responding: %s", response.message)
+    try:
+        reply_message, intent, conv_id = await handle_merchant_reply(
+            conversation_id=request.conversation_id,
+            merchant_message=request.merchant_message,
+        )
+    except ConversationNotFoundError:
+        logger.warning("Conversation not found: %s", request.conversation_id)
+        return ReplyResponse(
+            message=f"Conversation not found: {request.conversation_id}",
+        )
+
+    # Get updated conversation state for the response
+    try:
+        state = ConversationManager.get(conv_id)
+        stage = state.stage.value
+    except ConversationNotFoundError:
+        stage = "unknown"
+
+    response = ReplyResponse(
+        message="Reply processed." if reply_message else "No reply needed (autoresponder detected).",
+        conversation_id=conv_id,
+        intent=intent.value,
+        stage=stage,
+        result=reply_message,
+    )
+    logger.info(
+        "POST /v1/reply — intent=%s stage=%s has_reply=%s",
+        intent.value,
+        stage,
+        reply_message is not None,
+    )
     return response
 
 
@@ -147,19 +195,48 @@ async def handle_reply(request: ReplyRequest) -> ReplyResponse:
     response_model=TickResponse,
     summary="Scheduled cadence tick",
     description=(
-        "Called periodically to evaluate which merchants should receive "
-        "proactive outreach. Phase 1: placeholder."
+        "Called periodically to evaluate which conversations need "
+        "follow-up messages. Returns actions for each conversation."
     ),
 )
 async def handle_tick(request: TickRequest) -> TickResponse:
-    """Process a scheduled tick for proactive merchant engagement.
+    """Process a scheduled tick for proactive follow-up.
 
-    Phase 2 will implement cadence planning, suppression checks,
-    and batch message composition.
+    Evaluates active conversations and sends follow-ups where needed.
     """
-    logger.info("POST /v1/tick — timestamp=%s", request.timestamp or "not_provided")
-    logger.info("POST /v1/tick — validation successful")
+    logger.info(
+        "POST /v1/tick — timestamp=%s merchant_ids=%s",
+        request.timestamp or "not_provided",
+        request.merchant_ids or "all",
+    )
 
-    response = TickResponse(message="Tick endpoint.")
-    logger.info("POST /v1/tick — responding: %s", response.message)
+    actions = process_tick(
+        timestamp=request.timestamp,
+        merchant_ids=request.merchant_ids if request.merchant_ids else None,
+    )
+
+    tick_actions = []
+    results = []
+    for action in actions:
+        tick_action = TickAction(
+            conversation_id=action["conversation_id"],
+            merchant_id=action["merchant_id"],
+            action=action["action"],
+            message=action.get("message"),
+        )
+        tick_actions.append(tick_action)
+        if action.get("message"):
+            results.append(action["message"])
+
+    response = TickResponse(
+        message=f"Tick processed. {len(results)} follow-up(s) sent.",
+        actions=tick_actions,
+        results=results,
+    )
+    logger.info(
+        "POST /v1/tick — actions=%d follow_ups=%d",
+        len(tick_actions),
+        len(results),
+    )
     return response
+

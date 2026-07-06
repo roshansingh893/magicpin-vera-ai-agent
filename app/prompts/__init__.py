@@ -8,5 +8,6 @@ iteration on messaging strategy.
 from app.prompts.system_prompt import SYSTEM_PROMPT
 from app.prompts.merchant_prompt import build_merchant_prompt
 from app.prompts.customer_prompt import build_customer_prompt
+from app.prompts.reply_prompt import build_reply_prompt
 
-__all__ = ["SYSTEM_PROMPT", "build_merchant_prompt", "build_customer_prompt"]
+__all__ = ["SYSTEM_PROMPT", "build_merchant_prompt", "build_customer_prompt", "build_reply_prompt"]

@@ -65,12 +65,24 @@ class ComposeResponse(BaseModel):
 class ReplyResponse(BaseModel):
     """POST /v1/reply — multi-turn reply output."""
     message: str = "Reply endpoint."
+    conversation_id: str = ""
+    intent: str = ""
+    stage: str = ""
     result: Optional[ComposedMessage] = None
+
+
+class TickAction(BaseModel):
+    """A single action decided by the tick handler."""
+    conversation_id: str
+    merchant_id: str
+    action: str  # "send_follow_up" or "no_action"
+    message: Optional[ComposedMessage] = None
 
 
 class TickResponse(BaseModel):
     """POST /v1/tick — scheduled cadence output."""
     message: str = "Tick endpoint."
+    actions: list[TickAction] = Field(default_factory=list)
     results: list[ComposedMessage] = Field(default_factory=list)
 
 

@@ -154,25 +154,28 @@ class TestComposeContext:
 class TestReply:
     """Reply endpoint tests."""
 
-    def test_valid_payload_returns_200(self, client: TestClient) -> None:
+    def test_missing_fields_returns_422(self, client: TestClient) -> None:
+        response = client.post("/v1/reply", json={})
+        assert response.status_code == 422
+
+    def test_missing_conversation_id_returns_422(self, client: TestClient) -> None:
         payload = {
-            "merchant_id": "m_001_drmeera_dentist_delhi",
+            "merchant_id": "m_001",
+            "merchant_message": "Yes please",
+        }
+        response = client.post("/v1/reply", json=payload)
+        assert response.status_code == 422
+
+    def test_nonexistent_conversation(self, client: TestClient) -> None:
+        payload = {
+            "conversation_id": "nonexistent_id",
+            "merchant_id": "m_001",
             "merchant_message": "Yes please",
         }
         response = client.post("/v1/reply", json=payload)
         assert response.status_code == 200
-
-    def test_returns_placeholder_message(self, client: TestClient) -> None:
-        payload = {
-            "merchant_id": "m_001_drmeera_dentist_delhi",
-            "merchant_message": "Yes please",
-        }
-        data = client.post("/v1/reply", json=payload).json()
-        assert data["message"] == "Reply endpoint."
-
-    def test_missing_fields_returns_422(self, client: TestClient) -> None:
-        response = client.post("/v1/reply", json={})
-        assert response.status_code == 422
+        data = response.json()
+        assert "not found" in data["message"]
 
 
 # ──────────────────────────────────────────────────────────────────
@@ -192,6 +195,8 @@ class TestTick:
         response = client.post("/v1/tick", json={})
         assert response.status_code == 200
 
-    def test_returns_placeholder_message(self, client: TestClient) -> None:
+    def test_returns_actions_field(self, client: TestClient) -> None:
         data = client.post("/v1/tick", json={}).json()
-        assert data["message"] == "Tick endpoint."
+        assert "actions" in data
+        assert "Tick processed" in data["message"]
+

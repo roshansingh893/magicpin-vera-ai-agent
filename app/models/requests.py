@@ -297,13 +297,10 @@ class ComposeRequest(BaseModel):
 
 
 class ReplyRequest(BaseModel):
-    """POST /v1/reply — handle a merchant's reply in a multi-turn conversation.
-
-    Phase 2 will expand this with full ConversationState.
-    """
+    """POST /v1/reply — handle a merchant's reply in a multi-turn conversation."""
+    conversation_id: str
     merchant_id: str
     merchant_message: str
-    # TODO Phase 2: conversation_state, trigger_id, etc.
 
     model_config = {"extra": "allow"}
 
@@ -311,10 +308,10 @@ class ReplyRequest(BaseModel):
 class TickRequest(BaseModel):
     """POST /v1/tick — scheduled cadence check.
 
-    Phase 2 will define what a "tick" contains (e.g., batch of
-    merchants to evaluate for proactive outreach).
+    Evaluates active conversations and determines which ones
+    need follow-up messages.
     """
     timestamp: str = ""  # ISO datetime of tick
-    # TODO Phase 2: merchant_ids, trigger_batch, etc.
+    merchant_ids: list[str] = Field(default_factory=list)
 
     model_config = {"extra": "allow"}
