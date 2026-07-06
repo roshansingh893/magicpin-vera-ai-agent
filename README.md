@@ -106,4 +106,4 @@ pytest tests/ -v
 | **Phase 1** | Backend foundation — project structure, API, models, config, tests | ✅ Complete |
 | **Phase 2** | Message composition — prompt engineering, LLM integration, structured output | ✅ Complete |
 | **Phase 3** | Multi-turn conversation handling — auto-reply detection, intent routing | ✅ Complete |
-| **Phase 4** | Evaluation — generate `submission.jsonl` for the 30 test pairs | 🔲 Next |
+| **Phase 4** | Evaluation — generate `submission.jsonl` for the 30 test pairs | ✅ Complete |
