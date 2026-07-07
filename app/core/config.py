@@ -43,6 +43,11 @@ class Settings(BaseSettings):
     # ── Dataset Paths (Phase 2) ──────────────────────────────────
     dataset_base_path: str = "../dataset"
 
+    # ── Cache & Rate Limiting (Phase 5) ──────────────────────────
+    cache_enabled: bool = True            # CACHE_ENABLED env var
+    cache_dir: str = "cache/responses"    # CACHE_DIR env var
+    rate_limit_rpm: int = 28              # RATE_LIMIT_RPM env var (Groq free tier: 30)
+
     model_config = {
         "env_file": ".env",
         "env_file_encoding": "utf-8",
