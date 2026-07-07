@@ -6,6 +6,10 @@
 [![Python 3.12+](https://img.shields.io/badge/python-3.12+-blue.svg)](https://www.python.org/downloads/)
 [![FastAPI](https://img.shields.io/badge/FastAPI-0.115+-009688.svg)](https://fastapi.tiangolo.com)
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](LICENSE)
+[![Live Demo](https://img.shields.io/badge/🚀_Live_Demo-Render-46E3B7.svg)](https://magicpin-vera-ai-agent.onrender.com/docs)
+[![Tests](https://img.shields.io/badge/tests-197%20passed-brightgreen.svg)](#-running-tests)
+
+🔗 **Live API**: [https://magicpin-vera-ai-agent.onrender.com](https://magicpin-vera-ai-agent.onrender.com/docs)
 
 ---
 
@@ -238,6 +242,17 @@ All scoring is **heuristic** (no LLM calls) — fast and deterministic.
 
 ## 🚀 Deployment
 
+### 🌐 Live Deployment (Render)
+
+The agent is **live and deployed** on Render's cloud platform:
+
+| Resource | URL |
+|----------|-----|
+| **API Base** | https://magicpin-vera-ai-agent.onrender.com |
+| **Swagger Docs** | https://magicpin-vera-ai-agent.onrender.com/docs |
+| **Health Check** | https://magicpin-vera-ai-agent.onrender.com/v1/healthz |
+| **Metadata** | https://magicpin-vera-ai-agent.onrender.com/v1/metadata |
+
 ### Local Development
 
 ```bash
@@ -262,7 +277,7 @@ docker run -p 8000:8000 --env-file .env vera-agent
 docker-compose up --build
 ```
 
-### Render
+### Render (Self-Deploy)
 
 Push to GitHub and connect your repo to [Render](https://render.com). The `render.yaml` configures everything automatically. Set `GROQ_API_KEY` as a secret environment variable in the Render dashboard.
 
@@ -281,9 +296,21 @@ Push to GitHub and connect your repo to [Render](https://render.com). The `rende
 ### Interactive Docs
 
 Once the server is running:
-- **Swagger UI**: http://localhost:8000/docs
+- **Swagger UI**: http://localhost:8000/docs (or [live version](https://magicpin-vera-ai-agent.onrender.com/docs))
 - **ReDoc**: http://localhost:8000/redoc
 - **OpenAPI JSON**: http://localhost:8000/openapi.json
+
+---
+
+## 📸 Proof of Working
+
+### Swagger UI — Live Deployment
+
+![Swagger UI showing all 5 API endpoints](docs/screenshots/swagger_ui.png)
+
+### Health Check — Live Response
+
+![Health check endpoint returning status ok](docs/screenshots/health_check.png)
 
 ---
 
